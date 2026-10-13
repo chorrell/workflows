@@ -1,0 +1,19 @@
+---
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    groups:
+      monthly-batch:
+        patterns:
+          - "*"
+    pull-request-branch-name:
+      separator: "/"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    open-pull-requests-limit: 1
+    cooldown:
+      default-days: 7
