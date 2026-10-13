@@ -94,14 +94,21 @@ rules:
 
 ## Versioning
 
-Callers reference the moving `v1` tag. Non-breaking changes go to `main`, and
-then `v1` is moved forward:
+Callers reference the moving major tag, `v1`. Releases are automated with
+[release-please](https://github.com/googleapis/release-please-action):
 
-```sh
-git tag -f v1 && git push -f origin v1
-```
+1. Changes merge to `main` with conventional-commit titles (`feat:` for a new
+   workflow or input, `fix:` for a fix).
+2. release-please opens or updates a release PR with the next version and
+   `CHANGELOG.md`.
+3. Merging the release PR tags `vX.Y.Z`, publishes a GitHub Release, and moves
+   `v1` to it.
 
-Breaking changes (renamed inputs, different defaults) get a new `v2` tag.
+To pin an exact version instead of following `v1`, use a release tag, for
+example `@v1.2.0`. Breaking changes (renamed inputs, different defaults) are
+committed as `feat!:` and released as `v2.0.0` under a new `v2` tag; `v1` stays
+where it was.
+
 Third-party actions used here are SHA-pinned and updated by Dependabot.
 
 [reusable]: https://docs.github.com/en/actions/sharing-automations/reusing-workflows

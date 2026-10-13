@@ -1,0 +1,59 @@
+---
+# Release automation. release-please keeps a release PR open with the next
+# version (from conventional commits) and CHANGELOG.md. Merging that PR creates
+# a vX.Y.Z tag and GitHub Release; this workflow then moves the floating major
+# tag (v1) to it, which is what callers reference.
+#
+# It runs with a GitHub App token, not GITHUB_TOKEN, because PRs opened with
+# GITHUB_TOKEN don't trigger CI, and the ruleset requires CI on every PR.
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    name: release-please
+    runs-on: ubuntu-latest  # needs the gh CLI
+    # The App's private key lives in this environment, which only main can use
+    environment: release
+    steps:
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510  # v3.3.0
+        with:
+          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+          permission-issues: write
+
+      - name: Run release-please
+        id: release
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7  # v5.0.0
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Move major tag
+        if: steps.release.outputs.release_created == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPO: ${{ github.repository }}
+          MAJOR_TAG: v${{ steps.release.outputs.major }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag_name }}
+        run: |
+          sha=$(gh api "repos/$REPO/commits/$RELEASE_TAG" --jq .sha)
+          if gh api "repos/$REPO/git/ref/tags/$MAJOR_TAG" > /dev/null 2>&1; then
+            gh api -X PATCH "repos/$REPO/git/refs/tags/$MAJOR_TAG" -f sha="$sha" -F force=true > /dev/null
+          else
+            gh api -X POST "repos/$REPO/git/refs" -f ref="refs/tags/$MAJOR_TAG" -f sha="$sha" > /dev/null
+          fi
+          echo "::notice::$MAJOR_TAG now points at $RELEASE_TAG ($sha)"
