@@ -36,7 +36,11 @@ tests/fixtures/                      # Files the self-tests lint (e.g. example.s
 - **Use `$/` for same-repo references** (`uses: $/.github/workflows/markdownlint.yml`), as zizmor's
   `self-repository` audit requires. actionlint does not support `$/` yet, so it is not used here; zizmor is the
   workflow linter.
-- **Every new reusable workflow** gets a call from `ci.yml` and a row in the README table.
+- **Every new reusable workflow** gets a call from `ci.yml` and a row in the README table. Once that PR is
+  merged, add its self-test checks (`<ci.yml job id> / <job name>`, exactly as `gh pr checks` reported them) to the
+  `main-default` ruleset's required status checks. New checks are not required automatically, so a later change
+  that breaks the workflow could otherwise merge. Don't add them before the merge: until `ci.yml` on `main` runs the
+  job, every other open PR waits on a check it never reports.
 
 ## Git and Pull Requests
 
