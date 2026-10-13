@@ -1,4 +1,3 @@
----
 version: 2
 updates:
   - package-ecosystem: "github-actions"
@@ -14,6 +13,21 @@ updates:
     commit-message:
       prefix: "ci"
       include: "scope"
-    open-pull-requests-limit: 1
+    cooldown:
+      default-days: 7
+
+  - package-ecosystem: "pre-commit"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    groups:
+      monthly-batch:
+        patterns:
+          - "*"
+    pull-request-branch-name:
+      separator: "/"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
     cooldown:
       default-days: 7
