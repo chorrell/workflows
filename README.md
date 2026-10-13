@@ -9,6 +9,7 @@ updating an action happens in one place.
 | Workflow | Purpose | Inputs |
 | --- | --- | --- |
 | [`markdownlint.yml`](.github/workflows/markdownlint.yml) | Lint Markdown with markdownlint-cli2 | `globs` (default `**/*.md`) |
+| [`shell-lint.yml`](.github/workflows/shell-lint.yml) | shellcheck and shfmt (two jobs, pinned versions) | `paths` (default: every file `shfmt -f .` finds), `shfmt-flags` (default `-i 2 -sr -ci`) |
 
 ## Usage
 
@@ -38,6 +39,21 @@ jobs:
     # with:
     #   globs: "docs/**/*.md"
 ```
+
+Callers of `shell-lint.yml` use the same pattern; its checks report as
+`<job id> / shellcheck` and `<job id> / shfmt`:
+
+```yaml
+jobs:
+  shell-lint:
+    uses: chorrell/workflows/.github/workflows/shell-lint.yml@v1
+    # with:
+    #   paths: "scripts/*.sh tests/**/*.bats"
+```
+
+shellcheck and shfmt versions are pinned with SHA-256 checksums in
+`shell-lint.yml`'s `env` block. Dependabot does not update them; bump them by
+hand alongside the `shellcheck-precommit` and `pre-commit-shfmt` hooks.
 
 ### zizmor
 
