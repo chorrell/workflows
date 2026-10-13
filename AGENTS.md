@@ -18,9 +18,10 @@ zizmor .github/
 ```text
 .github/workflows/markdownlint.yml   # Reusable: Markdown lint (input: globs)
 .github/workflows/shell-lint.yml     # Reusable: shellcheck + shfmt (inputs: paths, shfmt-flags)
+.github/workflows/docker-publish.yml # Reusable: Docker build/test, push to Docker Hub + GHCR with attestations
 .github/workflows/ci.yml             # Self-test: zizmor audit + calls the reusable workflows on this repo
 .github/dependabot.yml               # Bumps SHA-pinned actions and pre-commit hooks
-tests/fixtures/                      # Files the self-tests lint (e.g. example.sh for shell-lint)
+tests/fixtures/                      # Self-test inputs (example.sh for shell-lint, docker/ for docker-publish)
 ```
 
 ## Conventions
