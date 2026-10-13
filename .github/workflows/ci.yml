@@ -37,3 +37,18 @@ jobs:
     uses: $/.github/workflows/shell-lint.yml
     with:
       paths: "tests/**/*.sh"
+  docker-publish:
+    # A called workflow can't get more permissions than its caller grants, and
+    # GitHub checks this even for the push job that publish: false skips.
+    permissions:
+      contents: read
+      packages: write  # required by the (skipped) push job
+      id-token: write  # required by the (skipped) push job
+      attestations: write  # required by the (skipped) push job
+    uses: $/.github/workflows/docker-publish.yml
+    with:
+      image-name: fixture
+      context: tests/fixtures/docker
+      test-command: docker run --rm "$IMAGE" hello | grep -qx hello
+      test-platforms: '["linux/amd64", "linux/arm64"]'
+      publish: false

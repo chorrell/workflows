@@ -10,6 +10,7 @@ updating an action happens in one place.
 | --- | --- | --- |
 | [`markdownlint.yml`](.github/workflows/markdownlint.yml) | Lint Markdown with markdownlint-cli2 | `globs` (default `**/*.md`) |
 | [`shell-lint.yml`](.github/workflows/shell-lint.yml) | shellcheck and shfmt (two jobs, pinned versions) | `paths` (default: every file `shfmt -f .` finds), `shfmt-flags` (default `-i 2 -sr -ci`) |
+| [`docker-publish.yml`](.github/workflows/docker-publish.yml) | Build and test a Docker image; on the default branch, push it to Docker Hub and GHCR with provenance attestations | `image-name`, `test-command` (required); `test-platforms`, `platforms`, `context`, `build-args`, `tags`, `publish` |
 
 ## Usage
 
@@ -54,6 +55,29 @@ jobs:
 shellcheck and shfmt versions are pinned with SHA-256 checksums in
 `shell-lint.yml`'s `env` block. Dependabot does not update them; bump them by
 hand alongside the `shellcheck-precommit` and `pre-commit-shfmt` hooks.
+
+Callers of `docker-publish.yml` must grant the push job's permissions and pass
+the Docker Hub secrets explicitly. GHCR uses `GITHUB_TOKEN`, so each GHCR
+package must give the calling repository write access (Package settings →
+Manage Actions access). Its checks report as `<job id> / test (<platform>)`
+and `<job id> / push`:
+
+```yaml
+jobs:
+  docker:
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    uses: chorrell/workflows/.github/workflows/docker-publish.yml@v1
+    with:
+      image-name: pwgen
+      test-command: docker run -i --rm "$IMAGE" -sycnB -1 25
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+```
 
 ### zizmor
 
