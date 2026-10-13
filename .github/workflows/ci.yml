@@ -31,3 +31,9 @@ jobs:
           annotations: true
   markdownlint:
     uses: $/.github/workflows/markdownlint.yml
+  shell-lint:
+    uses: $/.github/workflows/shell-lint.yml
+  shell-lint-paths:
+    uses: $/.github/workflows/shell-lint.yml
+    with:
+      paths: "tests/**/*.sh"
