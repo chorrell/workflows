@@ -20,6 +20,10 @@ zizmor .github/
 .github/workflows/shell-lint.yml     # Reusable: shellcheck + shfmt (inputs: paths, shfmt-flags)
 .github/workflows/docker-publish.yml # Reusable: Docker build/test, push to Docker Hub + GHCR with attestations
 .github/workflows/ci.yml             # Self-test: zizmor audit + calls the reusable workflows on this repo
+.github/workflows/release.yml        # release-please: release PR, vX.Y.Z tags and Releases, moves the major tag
+release-please-config.json           # release-please settings (simple release type, v-prefixed tags)
+.release-please-manifest.json        # Current released version (updated by release PRs; don't edit by hand)
+version.txt, CHANGELOG.md            # Maintained by release-please
 .github/dependabot.yml               # Bumps SHA-pinned actions and pre-commit hooks
 tests/fixtures/                      # Self-test inputs (example.sh for shell-lint, docker/ for docker-publish)
 ```
@@ -29,8 +33,10 @@ tests/fixtures/                      # Self-test inputs (example.sh for shell-li
 - **Reusable workflows own the job, callers own the triggers.** Keep `on:`, `concurrency` and caller-specific
   `permissions` out of the reusable files; they go in each caller's stub. `concurrency` in a called workflow
   collides with the caller's group, because `github.workflow` resolves to the caller's name.
-- **Callers use the moving `v1` tag.** Any change on `main` reaches every caller once `v1` is moved, so changes must
-  stay backward compatible: add inputs with defaults, never rename or remove them. Breaking changes need a `v2` tag.
+- **Callers use the moving `v1` tag.** Any change on `main` reaches every caller once a release moves `v1`, so changes
+  must stay backward compatible: add inputs with defaults, never rename or remove them. A breaking change must be
+  marked as one (`feat!:` or a `BREAKING CHANGE:` footer) so release-please releases it as `v2.0.0` and leaves `v1`
+  alone.
 - **Pin third-party actions by full SHA** with a `# vX.Y.Z` comment; Dependabot updates them.
 - **Per-repo config stays in the caller.** For example, markdownlint rules come from the caller's
   `.markdownlint.yaml`, because the reusable workflow checks out the calling repo.
@@ -46,10 +52,13 @@ tests/fixtures/                      # Self-test inputs (example.sh for shell-li
 ## Git and Pull Requests
 
 - All changes go through a pull request. Branch from `main` as `feature/<description>` or `fix/<description>`.
-- Commit messages and PR titles use conventional commits (`feat: ...`, `fix: ...`, `ci: ...`, `docs: ...`).
+- Commit messages and PR titles use conventional commits (`feat: ...`, `fix: ...`, `ci: ...`, `docs: ...`). The
+  squash-merged PR title becomes the commit release-please reads: `feat` is a minor release, `fix` a patch, and
+  `docs`/`ci`/`chore` don't trigger a release.
 - Keep PR descriptions brief: a few bullets or one paragraph on what changed and why. No AI attribution lines.
-- PRs are squash-merged. After merging a change to a reusable workflow, move the tag:
-  `git tag -f v1 && git push -f origin v1`. Do not move `v1` without being asked.
+- PRs are squash-merged. Releases are automated by `release.yml` (release-please): after a releasable merge it opens or
+  updates a `chore(main): release X.Y.Z` PR. Merging that PR tags `vX.Y.Z`, creates the GitHub Release and moves the
+  major tag. Never move `v1` by hand, and don't merge the release PR without being asked.
 
 ## Gotchas
 
