@@ -11,6 +11,7 @@ updating an action happens in one place.
 | [`markdownlint.yml`](.github/workflows/markdownlint.yml) | Lint Markdown with markdownlint-cli2 | `globs` (default `**/*.md`) |
 | [`shell-lint.yml`](.github/workflows/shell-lint.yml) | shellcheck and shfmt (two jobs, pinned versions) | `paths` (default: every file `shfmt -f .` finds), `shfmt-flags` (default `-i 2 -sr -ci`) |
 | [`docker-publish.yml`](.github/workflows/docker-publish.yml) | Build and test a Docker image; on the default branch, push it to Docker Hub and GHCR with provenance attestations | `image-name`, `test-command` (required); `test-platforms`, `platforms`, `context`, `build-args`, `tags`, `publish` |
+| [`zizmor.yml`](.github/workflows/zizmor.yml) | Audit the repository's GitHub Actions workflows with zizmor (pinned version) | none |
 
 ## Usage
 
@@ -80,6 +81,19 @@ jobs:
 ```
 
 ### zizmor
+
+Callers of `zizmor.yml` use the same stub pattern, triggered on
+`pull_request` and on pushes to `main`. Its check reports as
+`<job id> / zizmor`:
+
+```yaml
+jobs:
+  zizmor:
+    uses: chorrell/workflows/.github/workflows/zizmor.yml@v1
+```
+
+The zizmor version is pinned in `zizmor.yml`. Dependabot does not update it;
+bump it by hand alongside the `zizmor-pre-commit` hook.
 
 zizmor requires hash pinning for every `uses:` by default. To call these
 workflows by the `v1` tag, add `.github/zizmor.yml` to the calling repository:

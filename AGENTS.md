@@ -19,7 +19,8 @@ zizmor .github/
 .github/workflows/markdownlint.yml   # Reusable: Markdown lint (input: globs)
 .github/workflows/shell-lint.yml     # Reusable: shellcheck + shfmt (inputs: paths, shfmt-flags)
 .github/workflows/docker-publish.yml # Reusable: Docker build/test, push to Docker Hub + GHCR with attestations
-.github/workflows/ci.yml             # Self-test: zizmor audit + calls the reusable workflows on this repo
+.github/workflows/zizmor.yml         # Reusable: zizmor audit of the caller's workflows (pinned zizmor version)
+.github/workflows/ci.yml             # Self-test: calls the reusable workflows on this repo
 .github/workflows/release.yml        # release-please: release PR, vX.Y.Z tags and Releases, moves the major tag
 release-please-config.json           # release-please settings (simple release type, v-prefixed tags)
 .release-please-manifest.json        # Current released version (updated by release PRs; don't edit by hand)
