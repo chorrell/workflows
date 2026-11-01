@@ -20,12 +20,14 @@ zizmor .github/
 .github/workflows/shell-lint.yml     # Reusable: shellcheck + shfmt (inputs: paths, shfmt-flags)
 .github/workflows/docker-publish.yml # Reusable: Docker build/test, push to Docker Hub + GHCR with attestations
 .github/workflows/zizmor.yml         # Reusable: zizmor audit of the caller's workflows (pinned zizmor version)
+.github/workflows/pre-commit.yml     # Reusable: run the caller's pre-commit hooks on all files (input: skip)
+.github/workflows/dependabot-automerge.yml # Reusable: auto-merge minor/patch Dependabot PRs for one group
 .github/workflows/ci.yml             # Self-test: calls the reusable workflows on this repo
 .github/workflows/release.yml        # release-please: release PR, vX.Y.Z tags and Releases, moves the major tag
 release-please-config.json           # release-please settings (simple release type, v-prefixed tags)
 .release-please-manifest.json        # Current released version (updated by release PRs; don't edit by hand)
 version.txt, CHANGELOG.md            # Maintained by release-please
-.github/dependabot.yml               # Bumps SHA-pinned actions and pre-commit hooks
+.github/dependabot.yml               # Bumps SHA-pinned actions and pre-commit hooks in one `tooling` group
 tests/fixtures/                      # Self-test inputs (example.sh for shell-lint, docker/ for docker-publish)
 ```
 

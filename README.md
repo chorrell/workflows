@@ -12,6 +12,8 @@ updating an action happens in one place.
 | [`shell-lint.yml`](.github/workflows/shell-lint.yml) | shellcheck and shfmt (two jobs, pinned versions) | `paths` (default: every file `shfmt -f .` finds), `shfmt-flags` (default `-i 2 -sr -ci`) |
 | [`docker-publish.yml`](.github/workflows/docker-publish.yml) | Build and test a Docker image; on the default branch, push it to Docker Hub and GHCR with provenance attestations | `image-name`, `test-command` (required); `test-platforms`, `platforms`, `context`, `build-args`, `tags`, `publish` |
 | [`zizmor.yml`](.github/workflows/zizmor.yml) | Audit the repository's GitHub Actions workflows with zizmor (pinned version) | none |
+| [`pre-commit.yml`](.github/workflows/pre-commit.yml) | Run every hook in the caller's `.pre-commit-config.yaml` on all files (pinned pre-commit version) | `skip` (comma-separated hook ids) |
+| [`dependabot-automerge.yml`](.github/workflows/dependabot-automerge.yml) | Enable auto-merge on Dependabot PRs for one group when every update is minor or patch | `dependency-group` (default `tooling`), `app-client-id`; secret `APP_PRIVATE_KEY` |
 
 ## Usage
 
@@ -105,6 +107,46 @@ rules:
       policies:
         "chorrell/*": ref-pin
 ```
+
+### pre-commit and Dependabot auto-merge
+
+`pre-commit.yml` runs the caller's hooks in CI, so a Dependabot bump to a hook
+is tested before it merges. Its check reports as `<job id> / pre-commit`. The
+pre-commit version is pinned in the workflow's `env` block; Dependabot does not
+update it.
+
+`dependabot-automerge.yml` enables auto-merge on a Dependabot PR when the PR
+belongs to `dependency-group` and every update in it is minor or patch. GitHub
+then squash-merges it once the required checks pass, so the repository needs a
+required check that exercises the update (`pre-commit / pre-commit` for hooks).
+Majors, other groups and security updates are left for review.
+
+Put GitHub Actions and pre-commit hooks in one multi-ecosystem group named
+`tooling` in `.github/dependabot.yml` (see this repository's), and keep
+ecosystems that need review, such as uv or Docker, out of it.
+
+```yaml
+name: dependabot-automerge
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  dependabot-automerge:
+    permissions:
+      contents: write
+      pull-requests: write
+    uses: chorrell/workflows/.github/workflows/dependabot-automerge.yml@v1
+```
+
+A merge made with `GITHUB_TOKEN` does not trigger `push` workflows. A
+repository that publishes or deploys on pushes to `main` should not call this
+workflow, or should pass a GitHub App to merge as: `app-client-id` and an
+`APP_PRIVATE_KEY` *Dependabot* secret (Dependabot runs can't read Actions
+secrets).
 
 ## Versioning
 

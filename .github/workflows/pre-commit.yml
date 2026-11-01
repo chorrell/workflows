@@ -1,0 +1,41 @@
+# Reusable pre-commit workflow. Runs every hook in the caller's
+# .pre-commit-config.yaml against all files, so a Dependabot bump to a hook is
+# tested before dependabot-automerge.yml merges it.
+name: pre-commit
+
+on:
+  workflow_call:
+    inputs:
+      skip:
+        description: Comma-separated hook ids to skip (pre-commit's SKIP), for hooks that can't run in CI
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+env:
+  # Dependabot doesn't update it; bump it by hand.
+  PRE_COMMIT_VERSION: "4.7.0"
+
+jobs:
+  pre-commit:
+    name: pre-commit
+    runs-on: ubuntu-latest  # markdownlint-cli2-docker and hadolint hooks need Docker, which ubuntu-slim lacks
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Cache hook environments
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ env.PRE_COMMIT_VERSION }}-${{ hashFiles('.pre-commit-config.yaml') }}
+
+      - name: Run pre-commit
+        env:
+          SKIP: ${{ inputs.skip }}
+        run: pipx run "pre-commit==${PRE_COMMIT_VERSION}" run --all-files --show-diff-on-failure --color always
