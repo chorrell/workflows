@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.2](https://github.com/chorrell/workflows/compare/v1.4.1...v1.4.2) (2026-11-01)
+
+
+### Bug Fixes
+
+* take zizmor, shellcheck and shfmt versions from pinned actions ([#16](https://github.com/chorrell/workflows/issues/16)) ([1470e62](https://github.com/chorrell/workflows/commit/1470e62b1217762ef71110b732b7652bd47c42ad))
+
 ## [1.4.1](https://github.com/chorrell/workflows/compare/v1.4.0...v1.4.1) (2026-11-01)
 
 
