@@ -12,7 +12,7 @@ updating an action happens in one place.
 | [`shell-lint.yml`](.github/workflows/shell-lint.yml) | shellcheck and shfmt (two jobs, pinned versions) | `paths` (default: every file `shfmt -f .` finds), `shfmt-flags` (default `-i 2 -sr -ci`) |
 | [`docker-publish.yml`](.github/workflows/docker-publish.yml) | Build and test a Docker image; on the default branch, push it to Docker Hub and GHCR with provenance attestations | `image-name`, `test-command` (required); `test-platforms`, `platforms`, `context`, `build-args`, `tags`, `publish` |
 | [`zizmor.yml`](.github/workflows/zizmor.yml) | Audit the repository's GitHub Actions workflows with zizmor (pinned version) | none |
-| [`pre-commit.yml`](.github/workflows/pre-commit.yml) | Run every hook in the caller's `.pre-commit-config.yaml` on all files (pinned pre-commit version) | `skip` (comma-separated hook ids) |
+| [`pre-commit.yml`](.github/workflows/pre-commit.yml) | Run every hook in the caller's `.pre-commit-config.yaml` on all files, with prek | `skip` (comma-separated hook ids) |
 | [`dependabot-automerge.yml`](.github/workflows/dependabot-automerge.yml) | Enable auto-merge on Dependabot PRs for one group when every update is minor or patch | `dependency-group` (default `tooling`), `app-client-id`; secret `APP_PRIVATE_KEY` |
 
 ## Usage
@@ -111,9 +111,11 @@ rules:
 ### pre-commit and Dependabot auto-merge
 
 `pre-commit.yml` runs the caller's hooks in CI, so a Dependabot bump to a hook
-is tested before it merges. Its check reports as `<job id> / pre-commit`. The
-pre-commit version is pinned in the workflow's `env` block; Dependabot does not
-update it.
+is tested before it merges. Its check reports as `<job id> / pre-commit`. It
+runs the hooks with [prek](https://github.com/j178/prek), a drop-in pre-commit
+replacement that reads the same config. The prek version comes from the
+SHA-pinned `j178/prek-action` (`prek-version: latest-known`), so Dependabot's
+update of that action also upgrades prek.
 
 `dependabot-automerge.yml` enables auto-merge on a Dependabot PR when the PR
 belongs to `dependency-group` and every update in it is minor or patch. GitHub
