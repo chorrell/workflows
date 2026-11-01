@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.1](https://github.com/chorrell/workflows/compare/v1.5.0...v1.5.1) (2026-11-01)
+
+
+### Bug Fixes
+
+* run zizmor on ubuntu-slim now that zizmor-action doesn't need Docker ([#19](https://github.com/chorrell/workflows/issues/19)) ([311d85c](https://github.com/chorrell/workflows/commit/311d85c5ea19337262ccd25491829e477954ee6c))
+
 ## [1.5.0](https://github.com/chorrell/workflows/compare/v1.4.2...v1.5.0) (2026-11-01)
 
 
