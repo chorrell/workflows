@@ -60,7 +60,10 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token || github.token }}
           PR_URL: ${{ github.event.pull_request.html_url }}
-        run: gh pr merge --auto --squash "$PR_URL"
+        # GitHub refuses to enable auto-merge once the required checks have
+        # passed but others are still running ("unstable status"). The PR can
+        # then merge directly; the ruleset still enforces the required checks.
+        run: gh pr merge --auto --squash "$PR_URL" || gh pr merge --squash "$PR_URL"
 
       - name: Explain skip
         if: >-
