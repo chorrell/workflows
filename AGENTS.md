@@ -28,7 +28,8 @@ zizmor .github/
 release-please-config.json           # release-please settings (simple release type, v-prefixed tags)
 .release-please-manifest.json        # Current released version (updated by release PRs; don't edit by hand)
 version.txt, CHANGELOG.md            # Maintained by release-please
-.github/dependabot.yml               # Bumps SHA-pinned actions and pre-commit hooks in one `tooling` group
+.github/dependabot.yml               # Bumps SHA-pinned actions, pre-commit hooks and Terraform in one `tooling` group
+.github/terraform/Dockerfile         # Terraform version for terraform-validate.yml (never built; Dependabot bumps it)
 tests/fixtures/                      # Self-test inputs (example.sh for shell-lint, docker/ for docker-publish,
                                      # terraform/ for terraform-validate)
 ```

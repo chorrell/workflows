@@ -14,7 +14,7 @@ updating an action happens in one place.
 | [`zizmor.yml`](.github/workflows/zizmor.yml) | Audit the repository's GitHub Actions workflows with zizmor | none |
 | [`pre-commit.yml`](.github/workflows/pre-commit.yml) | Run every hook in the caller's `.pre-commit-config.yaml` on all files, with prek | `skip` (comma-separated hook ids) |
 | [`dependabot-automerge.yml`](.github/workflows/dependabot-automerge.yml) | Enable auto-merge on Dependabot PRs for one group when every update is minor or patch | `dependency-group` (default `tooling`), `app-client-id`; secret `APP_PRIVATE_KEY` |
-| [`terraform-validate.yml`](.github/workflows/terraform-validate.yml) | `terraform fmt`, `init` (no backend), `validate` and `tflint` for one root module | `working-directory` (default `.`), `terraform-version` (default `~1.16`), `lockfile-readonly` (default `false`), `validate-env` (JSON object) |
+| [`terraform-validate.yml`](.github/workflows/terraform-validate.yml) | `terraform fmt`, `init` (no backend), `validate` and `tflint` for one root module | `working-directory` (default `.`), `terraform-version` (default: the version in [`.github/terraform/Dockerfile`](.github/terraform/Dockerfile)), `lockfile-readonly` (default `false`), `validate-env` (JSON object) |
 
 ## Usage
 
@@ -118,6 +118,13 @@ matrix job, one root per entry. `validate-env` sets environment variables for
 `terraform validate` only, for placeholder provider settings that validate
 reads but never uses; don't pass secrets in it.
 
+By default it installs the exact Terraform version tagged in this repository's
+[`.github/terraform/Dockerfile`](.github/terraform/Dockerfile), read at the
+commit the caller's `@v1` resolves to. The file is never built; it exists so
+Dependabot's `docker` ecosystem bumps the version in the `tooling` group, and
+the self-test runs the new version before it merges. Pass `terraform-version`
+(for example `latest` or `~> 1.17`) to override it.
+
 ```yaml
 jobs:
   terraform:
@@ -149,7 +156,7 @@ Majors, other groups and security updates are left for review.
 
 Put GitHub Actions and pre-commit hooks in one multi-ecosystem group named
 `tooling` in `.github/dependabot.yml` (see this repository's), and keep
-ecosystems that need review, such as uv or Docker, out of it.
+ecosystems that need review, such as uv or Docker images you build, out of it.
 
 ```yaml
 name: dependabot-automerge
