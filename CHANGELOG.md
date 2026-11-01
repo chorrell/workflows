@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/chorrell/workflows/compare/v1.4.2...v1.5.0) (2026-11-01)
+
+
+### Features
+
+* add reusable terraform-validate workflow ([#15](https://github.com/chorrell/workflows/issues/15)) ([9694028](https://github.com/chorrell/workflows/commit/9694028bf8476963cf196ff550fa9140471cbae2))
+
 ## [1.4.2](https://github.com/chorrell/workflows/compare/v1.4.1...v1.4.2) (2026-11-01)
 
 
