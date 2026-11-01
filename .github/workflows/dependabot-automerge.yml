@@ -1,0 +1,73 @@
+# Reusable Dependabot auto-merge. On a Dependabot PR for the given group whose
+# updates are all minor or patch, it enables auto-merge; GitHub squash-merges
+# the PR once the required checks pass. Other PRs (majors, other groups,
+# security updates) are left for review.
+#
+# The caller's job must grant: contents: write, pull-requests: write.
+#
+# A merge made with GITHUB_TOKEN doesn't trigger push workflows, so a repo
+# that publishes or deploys on push to main must either pass a GitHub App
+# (app-client-id plus the APP_PRIVATE_KEY Dependabot secret) or not call this.
+name: dependabot-automerge
+
+on:
+  workflow_call:
+    inputs:
+      dependency-group:
+        description: Dependabot group (or multi-ecosystem group) whose PRs may auto-merge
+        type: string
+        default: tooling
+      app-client-id:
+        description: GitHub App client ID to merge as, so push workflows run. Empty uses GITHUB_TOKEN.
+        type: string
+        default: ""
+    secrets:
+      APP_PRIVATE_KEY:
+        description: The GitHub App's private key (a Dependabot secret). Required with app-client-id.
+        required: false
+
+permissions: {}
+
+jobs:
+  automerge:
+    name: auto-merge
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-slim
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Fetch Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98  # v3.1.0
+
+      - name: Create GitHub App token
+        id: app-token
+        if: inputs.app-client-id != ''
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510  # v3.3.0
+        with:
+          client-id: ${{ inputs.app-client-id }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Enable auto-merge
+        if: >-
+          steps.metadata.outputs.dependency-group == inputs.dependency-group &&
+          (steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
+           steps.metadata.outputs.update-type == 'version-update:semver-patch')
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token || github.token }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: gh pr merge --auto --squash "$PR_URL"
+
+      - name: Explain skip
+        if: >-
+          !(steps.metadata.outputs.dependency-group == inputs.dependency-group &&
+            (steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
+             steps.metadata.outputs.update-type == 'version-update:semver-patch'))
+        env:
+          GROUP: ${{ steps.metadata.outputs.dependency-group }}
+          UPDATE_TYPE: ${{ steps.metadata.outputs.update-type }}
+        run: echo "::notice::Left for review (group '${GROUP}', ${UPDATE_TYPE:-unknown update type})"

@@ -1,0 +1,38 @@
+# Reusable pre-commit workflow. Runs every hook in the caller's
+# .pre-commit-config.yaml against all files, so a Dependabot bump to a hook is
+# tested before dependabot-automerge.yml merges it.
+#
+# It runs the hooks with prek, a drop-in pre-commit replacement that reads the
+# same config. prek-version: latest-known installs the newest prek bundled
+# with the pinned prek-action release, so Dependabot's bump of the action is
+# also the prek upgrade; there's no version to maintain here.
+name: pre-commit
+
+on:
+  workflow_call:
+    inputs:
+      skip:
+        description: Comma-separated hook ids to skip (SKIP), for hooks that can't run in CI
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  pre-commit:
+    name: pre-commit
+    runs-on: ubuntu-latest  # markdownlint-cli2-docker and hadolint hooks need Docker, which ubuntu-slim lacks
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Run hooks
+        uses: j178/prek-action@44924fe9ef4a6f88253c4b6b1bf11c689d3ce53d  # v3.1.0
+        env:
+          SKIP: ${{ inputs.skip }}
+        with:
+          prek-version: latest-known

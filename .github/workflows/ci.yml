@@ -20,6 +20,14 @@ jobs:
     uses: $/.github/workflows/zizmor.yml
   markdownlint:
     uses: $/.github/workflows/markdownlint.yml
+  pre-commit:
+    uses: $/.github/workflows/pre-commit.yml
+  dependabot-automerge:
+    # Merges this repo's own Dependabot PRs; skipped on every other PR and push
+    permissions:
+      contents: write
+      pull-requests: write
+    uses: $/.github/workflows/dependabot-automerge.yml
   shell-lint:
     uses: $/.github/workflows/shell-lint.yml
   shell-lint-paths:
