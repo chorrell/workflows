@@ -6,8 +6,8 @@ here, and other repos call it with a short stub, so action updates happen in one
 ## Commands
 
 ```bash
-# Run all hooks (gitleaks, markdownlint, zizmor, whitespace/YAML checks)
-pre-commit run --all-files
+# Run all hooks with prek (gitleaks, markdownlint, zizmor, whitespace/YAML checks)
+prek run --all-files
 
 # Audit workflows only
 zizmor .github/
