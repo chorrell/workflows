@@ -14,6 +14,7 @@ updating an action happens in one place.
 | [`zizmor.yml`](.github/workflows/zizmor.yml) | Audit the repository's GitHub Actions workflows with zizmor | none |
 | [`pre-commit.yml`](.github/workflows/pre-commit.yml) | Run every hook in the caller's `.pre-commit-config.yaml` on all files, with prek | `skip` (comma-separated hook ids) |
 | [`dependabot-automerge.yml`](.github/workflows/dependabot-automerge.yml) | Enable auto-merge on Dependabot PRs for one group when every update is minor or patch | `dependency-group` (default `tooling`), `app-client-id`; secret `APP_PRIVATE_KEY` |
+| [`terraform-validate.yml`](.github/workflows/terraform-validate.yml) | `terraform fmt`, `init` (no backend), `validate` and `tflint` for one root module | `working-directory` (default `.`), `terraform-version` (default `~1.16`), `lockfile-readonly` (default `false`), `validate-env` (JSON object) |
 
 ## Usage
 
@@ -108,6 +109,28 @@ rules:
       policies:
         "chorrell/*": ref-pin
 ```
+
+### terraform-validate
+
+`terraform-validate.yml` checks one Terraform root module. Its check reports
+as `<job id> / validate`. A repository with several roots calls it from a
+matrix job, one root per entry. `validate-env` sets environment variables for
+`terraform validate` only, for placeholder provider settings that validate
+reads but never uses; don't pass secrets in it.
+
+```yaml
+jobs:
+  terraform:
+    uses: chorrell/workflows/.github/workflows/terraform-validate.yml@v1
+    with:
+      working-directory: terraform
+      lockfile-readonly: true
+      # validate-env: '{"GITHUB_APP_ID": "0"}'
+```
+
+A required check that should keep its name, such as `Terraform Validation`,
+belongs on a gate job in the caller that `needs:` the call, because the
+called job's check is always prefixed with the caller's job id.
 
 ### pre-commit and Dependabot auto-merge
 

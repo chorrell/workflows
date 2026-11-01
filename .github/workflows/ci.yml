@@ -49,3 +49,9 @@ jobs:
       test-command: docker run --rm "$IMAGE" hello | grep -qx hello
       test-platforms: '["linux/amd64", "linux/arm64"]'
       publish: false
+  terraform-validate:
+    uses: $/.github/workflows/terraform-validate.yml
+    with:
+      working-directory: tests/fixtures/terraform
+      lockfile-readonly: true
+      validate-env: '{"TF_IN_AUTOMATION": "1"}'

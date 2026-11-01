@@ -1,0 +1,74 @@
+# Reusable Terraform validation for one root module: terraform fmt, init
+# (without a backend), validate and tflint. Callers with several roots run it
+# in a matrix, one call per root.
+name: terraform-validate
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        description: Directory of the Terraform root module, relative to the repository root
+        type: string
+        default: "."
+      terraform-version:
+        description: Terraform version constraint passed to setup-terraform
+        type: string
+        default: "~1.16"
+      lockfile-readonly:
+        description: Run init with -lockfile=readonly, failing if the committed lock file is missing or out of date
+        type: boolean
+        default: false
+      validate-env:
+        description: >-
+          JSON object of environment variables for terraform validate, such as
+          placeholder provider settings that validate reads but never uses.
+          Not for secrets.
+        type: string
+        default: "{}"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: validate
+    # Full VM: terraform init downloads and unpacks providers, which took
+    # 6-26s on ubuntu-slim's single vCPU vs a steady 2-3s here.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e  # v4.0.1
+        with:
+          terraform_version: ${{ inputs.terraform-version }}
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Init
+        env:
+          LOCKFILE_READONLY: ${{ inputs.lockfile-readonly }}
+        run: |
+          if [ "$LOCKFILE_READONLY" = "true" ]; then
+            terraform init -backend=false -lockfile=readonly
+          else
+            terraform init -backend=false
+          fi
+
+      - name: Terraform Validate
+        env: ${{ fromJSON(inputs.validate-env) }}
+        run: terraform validate
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@6ffdbaa3be476b3431f7275c26966ef32ff60337  # v6.3.2
+
+      - name: Run TFLint
+        run: tflint --recursive
