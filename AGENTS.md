@@ -19,7 +19,7 @@ zizmor .github/
 .github/workflows/markdownlint.yml   # Reusable: Markdown lint (input: globs)
 .github/workflows/shell-lint.yml     # Reusable: shellcheck + shfmt (inputs: paths, shfmt-flags)
 .github/workflows/docker-publish.yml # Reusable: Docker build/test, push to Docker Hub + GHCR with attestations
-.github/workflows/zizmor.yml         # Reusable: zizmor audit of the caller's workflows (pinned zizmor version)
+.github/workflows/zizmor.yml         # Reusable: zizmor audit of the caller's workflows
 .github/workflows/pre-commit.yml     # Reusable: run the caller's pre-commit hooks on all files with prek (input: skip)
 .github/workflows/dependabot-automerge.yml # Reusable: auto-merge minor/patch Dependabot PRs for one group
 .github/workflows/ci.yml             # Self-test: calls the reusable workflows on this repo

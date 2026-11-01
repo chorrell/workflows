@@ -9,9 +9,9 @@ updating an action happens in one place.
 | Workflow | Purpose | Inputs |
 | --- | --- | --- |
 | [`markdownlint.yml`](.github/workflows/markdownlint.yml) | Lint Markdown with markdownlint-cli2 | `globs` (default `**/*.md`) |
-| [`shell-lint.yml`](.github/workflows/shell-lint.yml) | shellcheck and shfmt (two jobs, pinned versions) | `paths` (default: every file `shfmt -f .` finds), `shfmt-flags` (default `-i 2 -sr -ci`) |
+| [`shell-lint.yml`](.github/workflows/shell-lint.yml) | shellcheck and shfmt (two jobs) | `paths` (default: every file `shfmt -f .` finds), `shfmt-flags` (default `-i 2 -sr -ci`) |
 | [`docker-publish.yml`](.github/workflows/docker-publish.yml) | Build and test a Docker image; on the default branch, push it to Docker Hub and GHCR with provenance attestations | `image-name`, `test-command` (required); `test-platforms`, `platforms`, `context`, `build-args`, `tags`, `publish` |
-| [`zizmor.yml`](.github/workflows/zizmor.yml) | Audit the repository's GitHub Actions workflows with zizmor (pinned version) | none |
+| [`zizmor.yml`](.github/workflows/zizmor.yml) | Audit the repository's GitHub Actions workflows with zizmor | none |
 | [`pre-commit.yml`](.github/workflows/pre-commit.yml) | Run every hook in the caller's `.pre-commit-config.yaml` on all files, with prek | `skip` (comma-separated hook ids) |
 | [`dependabot-automerge.yml`](.github/workflows/dependabot-automerge.yml) | Enable auto-merge on Dependabot PRs for one group when every update is minor or patch | `dependency-group` (default `tooling`), `app-client-id`; secret `APP_PRIVATE_KEY` |
 
@@ -55,9 +55,9 @@ jobs:
     #   paths: "scripts/*.sh tests/**/*.bats"
 ```
 
-shellcheck and shfmt versions are pinned with SHA-256 checksums in
-`shell-lint.yml`'s `env` block. Dependabot does not update them; bump them by
-hand alongside the `shellcheck-precommit` and `pre-commit-shfmt` hooks.
+shellcheck and shfmt come from the SHA-pinned `taiki-e/install-action`,
+which installs the newest version in its bundled, checksummed manifests, so
+Dependabot's update of that action also upgrades the tools.
 
 Callers of `docker-publish.yml` must grant the push job's permissions and pass
 the Docker Hub secrets explicitly. GHCR uses `GITHUB_TOKEN`, so each GHCR
@@ -94,8 +94,9 @@ jobs:
     uses: chorrell/workflows/.github/workflows/zizmor.yml@v1
 ```
 
-The zizmor version is pinned in `zizmor.yml`. Dependabot does not update it;
-bump it by hand alongside the `zizmor-pre-commit` hook.
+The zizmor version is the one pinned in the SHA-pinned
+`zizmorcore/zizmor-action` release (its default `version: latest`), so
+Dependabot's update of that action also upgrades zizmor.
 
 zizmor requires hash pinning for every `uses:` by default. To call these
 workflows by the `v1` tag, add `.github/zizmor.yml` to the calling repository:
