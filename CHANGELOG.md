@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/chorrell/workflows/compare/v1.4.0...v1.4.1) (2026-11-01)
+
+
+### Bug Fixes
+
+* merge directly when auto-merge can't be enabled on a ready PR ([#13](https://github.com/chorrell/workflows/issues/13)) ([80f4eb9](https://github.com/chorrell/workflows/commit/80f4eb96cbfeeee32e98a5cd9ee9e83efb3ff285))
+
 ## [1.4.0](https://github.com/chorrell/workflows/compare/v1.3.0...v1.4.0) (2026-11-01)
 
 
