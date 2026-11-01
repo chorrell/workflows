@@ -67,7 +67,7 @@ tests/fixtures/                      # Self-test inputs (example.sh for shell-li
 
 ## Gotchas
 
-- `ubuntu-slim` runners have no Docker. zizmor-action runs zizmor in Docker, so the `zizmor` job uses
-  `ubuntu-latest`.
+- `ubuntu-slim` runners have no Docker, so jobs that need it (`pre-commit` for Docker-based hooks, `docker-publish`)
+  use `ubuntu-latest`. zizmor-action no longer needs Docker (it installs zizmor from a hash-locked wheel with pip).
 - Callers that run zizmor need `.github/zizmor.yml` with a `"chorrell/*": ref-pin` policy, or zizmor rejects the
   `@v1` reference (its default policy requires hash pinning).
