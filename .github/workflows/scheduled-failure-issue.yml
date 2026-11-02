@@ -1,0 +1,79 @@
+---
+# Reusable alert for scheduled runs. When a scheduled run of the calling
+# workflow fails, it opens an issue assigned to the repository owner (or
+# comments on the one already open); the next scheduled run that succeeds
+# closes it. Runs from other events (pull_request, workflow_dispatch) are
+# ignored, so a manual run can't close an open failure.
+#
+# The caller adds it as the last job, needing every other job:
+#
+#   alert:
+#     needs: [build, test]
+#     if: ${{ !cancelled() }}
+#     permissions:
+#       issues: write
+#     uses: chorrell/workflows/.github/workflows/scheduled-failure-issue.yml@v1
+#     with:
+#       failed: ${{ contains(needs.*.result, 'failure') }}
+#
+# The caller's job must grant: issues: write.
+name: scheduled-failure-issue
+
+on:
+  workflow_call:
+    inputs:
+      failed:
+        description: Whether the scheduled run failed, usually contains(needs.*.result, 'failure')
+        type: boolean
+        required: true
+      assignee:
+        description: User to assign the issue to. Empty uses the repository owner.
+        type: string
+        default: ""
+
+permissions: {}
+
+jobs:
+  issue:
+    name: issue
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-slim
+    timeout-minutes: 5
+    permissions:
+      issues: write  # open, comment on and close the alert issue
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      # github.workflow is the caller's name, so each workflow gets its own issue
+      TITLE: "Scheduled run failing: ${{ github.workflow }}"
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - name: Find open issue
+        id: find
+        # Filtered here rather than with --app/--author, which match no
+        # github-actions[bot] issues, or --search, whose index can lag
+        run: |
+          number=$(gh issue list --state open --limit 100 --json number,title,author \
+            --jq '[.[] | select(.title == env.TITLE and .author.login == "app/github-actions")][0].number // empty')
+          echo "number=${number}" >> "$GITHUB_OUTPUT"
+
+      - name: Open or update issue
+        if: inputs.failed
+        env:
+          NUMBER: ${{ steps.find.outputs.number }}
+          ASSIGNEE: ${{ inputs.assignee || github.repository_owner }}
+        run: |
+          if [[ -n "${NUMBER}" ]]; then
+            gh issue comment "${NUMBER}" --body "Failed again: ${RUN_URL}"
+          else
+            gh issue create --title "${TITLE}" --assignee "${ASSIGNEE}" \
+              --body "The scheduled run failed: ${RUN_URL}
+
+          This issue closes itself when the next scheduled run succeeds."
+          fi
+
+      - name: Close issue
+        if: ${{ !inputs.failed && steps.find.outputs.number != '' }}
+        env:
+          NUMBER: ${{ steps.find.outputs.number }}
+        run: gh issue close "${NUMBER}" --comment "The scheduled run succeeded again (${RUN_URL})."

@@ -23,6 +23,7 @@ zizmor .github/
 .github/workflows/pre-commit.yml     # Reusable: run the caller's pre-commit hooks on all files with prek (input: skip)
 .github/workflows/dependabot-automerge.yml # Reusable: auto-merge minor/patch Dependabot PRs for one group
 .github/workflows/terraform-validate.yml   # Reusable: terraform fmt/init/validate + tflint for one root module
+.github/workflows/scheduled-failure-issue.yml # Reusable: open/close an issue when a scheduled run fails/recovers
 .github/workflows/ci.yml             # Self-test: calls the reusable workflows on this repo
 .github/workflows/release.yml        # release-please: release PR, vX.Y.Z tags and Releases, moves the major tag
 release-please-config.json           # release-please settings (simple release type, v-prefixed tags)

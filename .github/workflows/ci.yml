@@ -49,6 +49,13 @@ jobs:
       test-command: docker run --rm "$IMAGE" hello | grep -qx hello
       test-platforms: '["linux/amd64", "linux/arm64"]'
       publish: false
+  scheduled-failure-issue:
+    # Acts only on scheduled runs, so here this checks that the call is valid
+    permissions:
+      issues: write  # required by the (skipped) issue job
+    uses: $/.github/workflows/scheduled-failure-issue.yml
+    with:
+      failed: false
   terraform-validate:
     uses: $/.github/workflows/terraform-validate.yml
     with:
