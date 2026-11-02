@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.2](https://github.com/chorrell/workflows/compare/v1.5.1...v1.5.2) (2026-11-02)
+
+
+### Bug Fixes
+
+* take terraform-validate's Terraform version from a Dependabot-bumped pin ([#21](https://github.com/chorrell/workflows/issues/21)) ([913fe08](https://github.com/chorrell/workflows/commit/913fe08ffc659c692168524274a9fd4a3d52663f))
+
 ## [1.5.1](https://github.com/chorrell/workflows/compare/v1.5.0...v1.5.1) (2026-11-01)
 
 
