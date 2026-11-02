@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.3](https://github.com/chorrell/workflows/compare/v1.5.2...v1.5.3) (2026-11-02)
+
+
+### Bug Fixes
+
+* take terraform-validate's TFLint version from a Dependabot-bumped pin ([#22](https://github.com/chorrell/workflows/issues/22)) ([4ed3c99](https://github.com/chorrell/workflows/commit/4ed3c9972cc90351f62ab48f11908436adc21bbf))
+
 ## [1.5.2](https://github.com/chorrell/workflows/compare/v1.5.1...v1.5.2) (2026-11-02)
 
 
