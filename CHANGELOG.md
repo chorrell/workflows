@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/chorrell/workflows/compare/v1.5.3...v1.6.0) (2026-11-02)
+
+
+### Features
+
+* add scheduled-failure-issue workflow to alert on failed scheduled runs ([#25](https://github.com/chorrell/workflows/issues/25)) ([4435f01](https://github.com/chorrell/workflows/commit/4435f0196f3733828e09c544c10181c740c328ea))
+
 ## [1.5.3](https://github.com/chorrell/workflows/compare/v1.5.2...v1.5.3) (2026-11-02)
 
 
