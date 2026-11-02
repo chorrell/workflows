@@ -14,6 +14,7 @@ updating an action happens in one place.
 | [`zizmor.yml`](.github/workflows/zizmor.yml) | Audit the repository's GitHub Actions workflows with zizmor | none |
 | [`pre-commit.yml`](.github/workflows/pre-commit.yml) | Run every hook in the caller's `.pre-commit-config.yaml` on all files, with prek | `skip` (comma-separated hook ids) |
 | [`dependabot-automerge.yml`](.github/workflows/dependabot-automerge.yml) | Enable auto-merge on Dependabot PRs for one group when every update is minor or patch | `dependency-group` (default `tooling`), `app-client-id`; secret `APP_PRIVATE_KEY` |
+| [`scheduled-failure-issue.yml`](.github/workflows/scheduled-failure-issue.yml) | Open an issue assigned to the owner when a scheduled run fails; close it on the next scheduled success | `failed` (required), `assignee` (default: repository owner) |
 | [`terraform-validate.yml`](.github/workflows/terraform-validate.yml) | `terraform fmt`, `init` (no backend), `validate` and `tflint` for one root module | `working-directory` (default `.`), `terraform-version` (default: the version in [`.github/terraform/Dockerfile`](.github/terraform/Dockerfile)), `tflint-version` (default: the version in [`.github/tflint/Dockerfile`](.github/tflint/Dockerfile)), `lockfile-readonly` (default `false`), `validate-env` (JSON object) |
 
 ## Usage
@@ -187,6 +188,36 @@ repository that publishes or deploys on pushes to `main` should not call this
 workflow, or should pass a GitHub App to merge as: `app-client-id` and an
 `APP_PRIVATE_KEY` *Dependabot* secret (Dependabot runs can't read Actions
 secrets).
+
+### scheduled-failure-issue
+
+GitHub sends scheduled-run notifications to whoever last changed the cron
+line, alongside every other notification, so a failing nightly job is easy to
+miss. `scheduled-failure-issue.yml` turns a failed scheduled run into an issue
+titled `Scheduled run failing: <workflow name>`, assigned to the repository
+owner. Further failures comment on that issue instead of opening another, and
+the next scheduled run that succeeds closes it. Runs triggered by anything
+other than `schedule` are ignored, so a successful manual run doesn't close a
+real failure. Its check reports as `<job id> / issue`.
+
+Add it as the last job of the scheduled workflow, needing every other job.
+`!cancelled()` makes it run after a failure, and `needs.*.result` counts a
+failure in any job, including one whose dependants were skipped:
+
+```yaml
+jobs:
+  alert:
+    needs: [build, publish]
+    if: ${{ !cancelled() }}
+    permissions:
+      issues: write
+    uses: chorrell/workflows/.github/workflows/scheduled-failure-issue.yml@v1
+    with:
+      failed: ${{ contains(needs.*.result, 'failure') }}
+```
+
+A workflow that fails before any job starts (for example, invalid YAML) never
+reaches this job, so it can't open an issue.
 
 ## Versioning
 
