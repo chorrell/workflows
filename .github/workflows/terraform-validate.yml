@@ -1,6 +1,11 @@
 # Reusable Terraform validation for one root module: terraform fmt, init
 # (without a backend), validate and tflint. Callers with several roots run it
 # in a matrix, one call per root.
+#
+# By default the Terraform version is the exact tag in this repository's
+# .github/terraform/Dockerfile, read at the commit that defines this job, so
+# Dependabot's bump of that tag is also the Terraform upgrade, and the version
+# doesn't float at run time.
 name: terraform-validate
 
 on:
@@ -11,9 +16,12 @@ on:
         type: string
         default: "."
       terraform-version:
-        description: Terraform version constraint passed to setup-terraform
+        description: >-
+          Terraform version or constraint passed to setup-terraform, such as
+          latest. Empty uses the exact version in this repository's
+          .github/terraform/Dockerfile.
         type: string
-        default: "~1.16"
+        default: ""
       lockfile-readonly:
         description: Run init with -lockfile=readonly, failing if the committed lock file is missing or out of date
         type: boolean
@@ -45,10 +53,31 @@ jobs:
         with:
           persist-credentials: false
 
+      # job.workflow_* name this workflow's own repository and commit, not the
+      # caller's, so a caller on @v1 gets the version that release pinned.
+      - name: Read Terraform version
+        id: terraform-version
+        if: inputs.terraform-version == ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WORKFLOW_REPOSITORY: ${{ job.workflow_repository }}
+          WORKFLOW_SHA: ${{ job.workflow_sha }}
+        run: |
+          dockerfile=$(gh api -H "Accept: application/vnd.github.raw" \
+            "repos/$WORKFLOW_REPOSITORY/contents/.github/terraform/Dockerfile?ref=$WORKFLOW_SHA")
+          version=$(printf '%s\n' "$dockerfile" |
+            sed -n 's|^FROM hashicorp/terraform:\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\)@sha256:[0-9a-f]\{64\}$|\1|p')
+          if [ -z "$version" ]; then
+            echo "::error::No FROM hashicorp/terraform:X.Y.Z@sha256:... line in $WORKFLOW_REPOSITORY/.github/terraform/Dockerfile at $WORKFLOW_SHA"
+            exit 1
+          fi
+          echo "Terraform $version from $WORKFLOW_REPOSITORY/.github/terraform/Dockerfile at $WORKFLOW_SHA"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e  # v4.0.1
         with:
-          terraform_version: ${{ inputs.terraform-version }}
+          terraform_version: ${{ inputs.terraform-version || steps.terraform-version.outputs.version }}
 
       - name: Terraform Format Check
         run: terraform fmt -check -recursive

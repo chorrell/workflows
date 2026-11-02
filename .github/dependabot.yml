@@ -1,7 +1,8 @@
 version: 2
 
-# GitHub Actions and pre-commit hooks arrive as one monthly PR, which
-# dependabot-automerge.yml merges when every update is minor or patch.
+# GitHub Actions, pre-commit hooks and the Terraform version arrive as one
+# monthly PR, which dependabot-automerge.yml merges when every update is minor
+# or patch.
 multi-ecosystem-groups:
   tooling:
     schedule:
@@ -23,6 +24,16 @@ updates:
 
   - package-ecosystem: "pre-commit"
     directory: "/"
+    patterns:
+      - "*"
+    multi-ecosystem-group: "tooling"
+    cooldown:
+      default-days: 7
+
+  # Not a built image: the tag in .github/terraform/Dockerfile is the Terraform
+  # version terraform-validate.yml installs, tested by its self-test.
+  - package-ecosystem: "docker"
+    directory: "/.github/terraform"
     patterns:
       - "*"
     multi-ecosystem-group: "tooling"
