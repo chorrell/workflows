@@ -5,7 +5,10 @@
 # By default the Terraform version is the exact tag in this repository's
 # .github/terraform/Dockerfile, read at the commit that defines this job, so
 # Dependabot's bump of that tag is also the Terraform upgrade, and the version
-# doesn't float at run time.
+# doesn't float at run time. TFLint works the same way, from
+# .github/tflint/Dockerfile, and its download is checked against the release's
+# checksums.txt, which gh release verify-asset first checks against the
+# release's attestation.
 name: terraform-validate
 
 on:
@@ -20,6 +23,13 @@ on:
           Terraform version or constraint passed to setup-terraform, such as
           latest. Empty uses the exact version in this repository's
           .github/terraform/Dockerfile.
+        type: string
+        default: ""
+      tflint-version:
+        description: >-
+          TFLint release passed to setup-tflint, such as v0.65.0 or latest.
+          Empty uses the exact version in this repository's
+          .github/tflint/Dockerfile.
         type: string
         default: ""
       lockfile-readonly:
@@ -96,8 +106,60 @@ jobs:
         env: ${{ fromJSON(inputs.validate-env) }}
         run: terraform validate
 
+      # Resolves latest to a tag too, so every download gets a checksum. The
+      # release's attestation vouches for checksums.txt, and setup-tflint then
+      # rejects a zip that doesn't match its line.
+      - name: Resolve TFLint version and checksum
+        id: tflint
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TFLINT_VERSION: ${{ inputs.tflint-version }}
+          WORKFLOW_REPOSITORY: ${{ job.workflow_repository }}
+          WORKFLOW_SHA: ${{ job.workflow_sha }}
+        run: |
+          if [ -z "$TFLINT_VERSION" ]; then
+            dockerfile=$(gh api -H "Accept: application/vnd.github.raw" \
+              "repos/$WORKFLOW_REPOSITORY/contents/.github/tflint/Dockerfile?ref=$WORKFLOW_SHA")
+            version=$(printf '%s\n' "$dockerfile" |
+              sed -n 's|^FROM ghcr\.io/terraform-linters/tflint:\(v[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\)@sha256:[0-9a-f]\{64\}$|\1|p')
+            if [ -z "$version" ]; then
+              echo "::error::No FROM ghcr.io/terraform-linters/tflint:vX.Y.Z@sha256:... line in $WORKFLOW_REPOSITORY/.github/tflint/Dockerfile at $WORKFLOW_SHA"
+              exit 1
+            fi
+            echo "TFLint $version from $WORKFLOW_REPOSITORY/.github/tflint/Dockerfile at $WORKFLOW_SHA"
+          elif [ "$TFLINT_VERSION" = "latest" ]; then
+            version=$(gh release view --repo terraform-linters/tflint --json tagName --jq .tagName)
+            echo "TFLint latest is $version"
+          else
+            version="v${TFLINT_VERSION#v}"
+          fi
+
+          case "$RUNNER_ARCH" in
+            X64) arch=amd64 ;;
+            ARM64) arch=arm64 ;;
+            *)
+              echo "::error::No TFLint build for runner architecture $RUNNER_ARCH"
+              exit 1
+              ;;
+          esac
+
+          dir="$RUNNER_TEMP/tflint-checksums"
+          gh release download "$version" --repo terraform-linters/tflint \
+            --pattern checksums.txt --dir "$dir" --clobber
+          gh release verify-asset "$version" "$dir/checksums.txt" --repo terraform-linters/tflint
+          checksum=$(awk -v zip="tflint_linux_$arch.zip" '$2 == zip { print $1 }' "$dir/checksums.txt")
+          if [ -z "$checksum" ]; then
+            echo "::error::No tflint_linux_$arch.zip in TFLint $version's checksums.txt"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "checksum=$checksum" >> "$GITHUB_OUTPUT"
+
       - name: Setup TFLint
         uses: terraform-linters/setup-tflint@6ffdbaa3be476b3431f7275c26966ef32ff60337  # v6.3.2
+        with:
+          tflint_version: ${{ steps.tflint.outputs.version }}
+          checksums: ${{ steps.tflint.outputs.checksum }}
 
       - name: Run TFLint
         run: tflint --recursive
